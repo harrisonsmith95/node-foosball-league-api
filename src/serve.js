@@ -1,0 +1,1 @@
+const serve = ({express, config}) => {};
