@@ -19,9 +19,7 @@ const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser 
     password: process.env.DB_PASS
   };
 
-  const database = mysql.createConnection(dbConfig);
-
-  database.connect();
+  const database = mysql.createPool({connectionLimit: 10, ...dbConfig});
 
   const getCupData = (db, cupId) => {
     return new Promise((resolve) => {
