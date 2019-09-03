@@ -143,8 +143,13 @@ const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser 
       }
     };
 
+    console.log(gameData);
+
     gameData.forEach((game) => {
-      (parsedGameData.rounds[game.round]).push(game);
+      if (typeof parsedGameData.rounds[game.round] === "undefined") {
+        parsedGameData.rounds[game.round] = [];
+      }
+      parsedGameData.rounds[game.round].push(game);
     });
 
     res.json({
