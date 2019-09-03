@@ -1,5 +1,13 @@
 const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser }) => {
   const app = express();
+  const port = process.env.PORT || 3000;
+
+  app.listen(port, () => {
+    console.log('listening on port', port);
+  });
+
+  //
+
   app.use(cors());
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(bodyParser.json());
@@ -11,7 +19,6 @@ const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser 
     password: process.env.DB_PASS
   };
 
-  const port = process.env.PORT || 3000;
   const database = mysql.createConnection(dbConfig);
 
   database.connect();
@@ -47,10 +54,6 @@ const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser 
     });
 
   };
-
-  app.listen(port, () => {
-    console.log('listening on port', port);
-  });
 
   app.get('/', (req, res) => {
     return res.json('Welcome to the Foosball Cup management API!!!');
