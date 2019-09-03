@@ -53,7 +53,7 @@ const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser 
   });
 
   app.get('/', (req, res) => {
-    return res.json('Welcome to the Foosball Cup management API');
+    return res.json('Welcome to the Foosball Cup management API!!!');
   });
 
   /**
