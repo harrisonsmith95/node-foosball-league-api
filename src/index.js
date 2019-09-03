@@ -3,6 +3,7 @@ const config = require('config');
 const cors = require('cors');
 const mysql = require('mysql');
 const parseDbData = require('./parse-db-data');
+const bodyParser = require('body-parser');
 
 const serve = require('./serve').bind(null, {
   express,
@@ -10,7 +11,8 @@ const serve = require('./serve').bind(null, {
   cors,
   process,
   mysql,
-  parseDbData
+  parseDbData,
+  bodyParser
 });
 
 serve();

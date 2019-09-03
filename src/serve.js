@@ -1,6 +1,8 @@
-const serve = ({ express, config, cors, process, mysql, parseDbData }) => {
+const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser }) => {
   const app = express();
   app.use(cors());
+  app.use(bodyParser.urlencoded({ extended: false }));
+  app.use(bodyParser.json());
 
   const port = process.env.PORT || 3000;
   const dbConfig = config.get('db');
@@ -10,7 +12,7 @@ const serve = ({ express, config, cors, process, mysql, parseDbData }) => {
 
   const getCupData = (db, cupId) => {
     return new Promise((resolve) => {
-      db.query(`SELECT * FROM cups WHERE id = ${cupId}`, (err, rows) => {
+      db.query(`SELECT * FROM cups WHERE id = ?`, [cupId], (err, rows) => {
         resolve(parseDbData(rows));
       });
     });
@@ -18,16 +20,35 @@ const serve = ({ express, config, cors, process, mysql, parseDbData }) => {
 
   const getGamesInCup = (db, cupId) => {
     return new Promise((resolve) => {
-      db.query(`SELECT * FROM games WHERE cup_id = ${cupId}`, (err, rows) => {
+      db.query(`SELECT * FROM games WHERE cup_id = ?`, [cupId], (err, rows) => {
         resolve(parseDbData(rows));
       });
     });
+  };
+
+  const insertNewGame = (db, data) => {
+
+    return new Promise((resolve, reject) => {
+      const { round, cup_id, player_1, player_2 } = data;
+      const SQL = "INSERT INTO `games` (`id`, `round`, `player_1`, `player_2`, `result`, `cup_id`) VALUES (NULL, '?', '?', '?', '0', '?')";
+      db.query(SQL, [round, player_1, player_2, cup_id], (err, rows) => {
+        if (err) {
+          reject(err);
+        }
+        resolve(rows);
+      });
+
+    });
+
   };
 
   app.listen(port, () => {
     console.log('listening on port', port);
   });
 
+  app.get('/', (req, res) => {
+    return res.json('Welcome to the Foosball Cup management API');
+  });
 
   /**
    * Rough breakdown of app requirements
@@ -45,10 +66,10 @@ const serve = ({ express, config, cors, process, mysql, parseDbData }) => {
 
   app.get('/cups/:id?', (req, res) => {
 
-    const SQL = req.params.id ? `SELECT * FROM cups WHERE id = ${req.params.id}` : `SELECT * FROM cups`;
+    const SQL = req.params.id ? `SELECT * FROM cups WHERE id = ?` : `SELECT * FROM cups`;
 
     // @todo auth and jwt implementation / header check
-    database.query(SQL, (err, rows) => {
+    database.query(SQL, [req.params.id], (err, rows) => {
       return res.json(parseDbData(rows));
     });
 
@@ -62,34 +83,34 @@ const serve = ({ express, config, cors, process, mysql, parseDbData }) => {
   });
 
   app.get('/games/:id?', (req, res) => {
-    const SQL = req.params.id ? `SELECT * from games WHERE id = ${req.params.id}` : `SELECT * FROM games`;
+    const SQL = req.params.id ? `SELECT * from games WHERE id = ?` : `SELECT * FROM games`;
 
-    database.query(SQL, (err, rows) => {
+    database.query(SQL, [req.params.id], (err, rows) => {
       return res.json(parseDbData(rows));
     });
   });
 
   app.get('/games/cup/:id', (req, res) => {
-    database.query(`SELECT * FROM games WHERE cup_id = ${req.params.id}`, (err, rows) => {
+    database.query(`SELECT * FROM games WHERE cup_id = ?`, [req.params.id], (err, rows) => {
       return res.json(parseDbData(rows));
     });
   });
 
   app.get('/participants/:id?', (req, res) => {
-    const SQL = req.params.id ? `SELECT * FROM participants WHERE id = ${req.params.id}` : `SELECT * FROM participants`;
-    database.query(SQL, (err, rows) => {
+    const SQL = req.params.id ? `SELECT * FROM participants WHERE id = ?` : `SELECT * FROM participants`;
+    database.query(SQL, [req.params.id], (err, rows) => {
       return res.json(parseDbData(rows));
     });
   });
 
   app.get('/participants/team/:id', (req, res) => {
-    database.query(`SELECT * FROM participants WHERE team_id = ${req.params.id}`, (err, rows) => {
+    database.query(`SELECT * FROM participants WHERE team_id = ?`, [req.params.id], (err, rows) => {
       return res.json(parseDbData(rows));
     });
   });
 
   app.get('/cups/current/:teamid', (req, res) => {
-    database.query(`SELECT * FROM cups WHERE team = ${req.params.teamid} AND active = 1`, (err, rows) => {
+    database.query(`SELECT * FROM cups WHERE team = ? AND active = 1`, [req.params.teamid], (err, rows) => {
       if (rows.length < 1) {
         return res.json({
           status: 'error',
@@ -117,12 +138,32 @@ const serve = ({ express, config, cors, process, mysql, parseDbData }) => {
       (parsedGameData.rounds[game.round]).push(game);
     });
 
-    console.log(gameData);
-
     res.json({
       ...cupData,
       games: parsedGameData
     });
+  });
+
+  app.post('/game/:id?', async (req, res) => {
+    const requestBody = req.body;
+
+    if (req.params.id) {
+
+
+
+    } else {
+      const result = await insertNewGame(database, requestBody).catch(err => {
+        return res.json({
+          status: "error",
+          errorMsg: err.code
+        });
+      });
+
+      return res.json({
+        status: "success",
+        successMsg: "Game successfully added"
+      })
+    }
   });
 
 };
