@@ -4,8 +4,14 @@ const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser 
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(bodyParser.json());
 
+  const dbConfig = {
+    host: process.env.DB_HOST,
+    database: process.env.DB_NAME,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS
+  };
+
   const port = process.env.PORT || 3000;
-  const dbConfig = config.get('db');
   const database = mysql.createConnection(dbConfig);
 
   database.connect();
