@@ -1,4 +1,4 @@
-const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser }) => {
+const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser, getDatabase, cupRoute }) => {
   const app = express();
   const port = process.env.PORT || 3000;
 
@@ -12,31 +12,6 @@ const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser 
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(bodyParser.json());
 
-  const dbConfig = {
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS
-  };
-
-  const database = mysql.createPool({connectionLimit: 10, ...dbConfig});
-
-  const getCupData = (db, cupId) => {
-    return new Promise((resolve) => {
-      db.query(`SELECT * FROM cups WHERE id = ?`, [cupId], (err, rows) => {
-        resolve(parseDbData(rows));
-      });
-    });
-  };
-
-  const getGamesInCup = (db, cupId) => {
-    return new Promise((resolve) => {
-      db.query(`SELECT * FROM games WHERE cup_id = ?`, [cupId], (err, rows) => {
-        resolve(parseDbData(rows));
-      });
-    });
-  };
-
   const insertNewGame = (db, data) => {
 
     return new Promise((resolve, reject) => {
@@ -44,7 +19,11 @@ const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser 
       const SQL = "INSERT INTO `games` (`id`, `round`, `player_1`, `player_2`, `result`, `cup_id`) VALUES (NULL, '?', '?', '?', '0', '?')";
       db.query(SQL, [round, player_1, player_2, cup_id], (err, rows) => {
         if (err) {
-          reject(err);
+          reject({
+            status: 'error',
+            errorMsg: err.code
+          });
+          return;
         }
         resolve(rows);
       });
@@ -53,9 +32,84 @@ const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser 
 
   };
 
+  const updateGame = (db, data) => {
+
+    return new Promise((resolve, reject) => {
+      const {id} = data;
+
+      if (typeof id !== 'number') {
+        reject({
+          status: 'error',
+          errorMsg: 'Invalid ID specified, please provide an integer'
+        });
+        return;
+      }
+
+      db.query('SELECT * FROM games WHERE id = ?', [id], (err, rows) => {
+
+        if (err) {
+          reject({
+            status: 'error',
+            errorMsg: err.code
+          });
+          return;
+        }
+
+        if (rows.length < 1) {
+          reject({
+            status: 'error',
+            errorMsg: `No game with ID: ${id} found`
+          });
+          return;
+        } else if (rows.length > 1) {
+          reject({
+            status: 'error',
+            errorMsg: `ERR_BAD_REQUEST - returned more than one row for ID: ${id}. Please contact site administrator`
+          });
+          return;
+        }
+
+        const currData = rows[0];
+
+        if (currData.result === data.result) {
+          reject({
+            status: 'error',
+            errorMsg: `Nothing to update, game with ID: ${id} already has result of: ${data.result}`
+          });
+          return;
+        }
+
+        if (data.result !== currData.player_1 && data.result !== currData.player_2 && data.result !== 0) {
+          reject({
+            status: 'error',
+            errorMsg: `Result must be ID of player_1 (${currData.player_1}) OR player_2 (${currData.player_2}) OR 0`
+          });
+          return;
+        }
+
+        const newGameData = Object.assign({}, {...currData, result: data.result});
+
+        db.query('UPDATE games SET result = ? WHERE id = ?', [newGameData.result, id], (err, rows) => {
+          if (err) {
+            reject({
+              status: 'error',
+              errorMsg: err.code
+            });
+            return;
+          }
+
+          resolve(rows);
+        });
+      });
+    });
+
+  };
+
   app.get('/', (req, res) => {
     return res.json('Welcome to the Foosball Cup management API!!!');
   });
+
+  const database = getDatabase();
 
   /**
    * Rough breakdown of app requirements
@@ -71,16 +125,7 @@ const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser 
 
   // @todo move this into db data and query dynamically based on current users affiliation
 
-  app.get('/cups/:id?', (req, res) => {
-
-    const SQL = req.params.id ? `SELECT * FROM cups WHERE id = ?` : `SELECT * FROM cups`;
-
-    // @todo auth and jwt implementation / header check
-    database.query(SQL, [req.params.id], (err, rows) => {
-      return res.json(parseDbData(rows));
-    });
-
-  });
+  app.use('/cups', cupRoute);
 
   app.get('/teams/:id?', (req, res) => {
     const SQL = req.params.id ? `SELECT * FROM teams WHERE id = ${req.params.id}` : `SELECT * FROM teams`;
@@ -116,59 +161,22 @@ const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser 
     });
   });
 
-  app.get('/cups/current/:teamid', (req, res) => {
-    database.query(`SELECT * FROM cups WHERE team = ? AND active = 1`, [req.params.teamid], (err, rows) => {
-      if (rows.length < 1) {
-        return res.json({
-          status: 'error',
-          errorMsg: `Team with ID: ${req.params.teamid} does not have an active cup.`
-        });
-      }
-      return res.json(parseDbData(rows));
-    });
-  });
-
-  app.get('/cup/full/:id', async (req, res) => {
-    // Get cup data,
-    const cupData = await getCupData(database, req.params.id);
-
-    // Get each game in cup
-    const gameData = await getGamesInCup(database, req.params.id);
-
-    const parsedGameData = {
-      rounds: {
-        0: []
-      }
-    };
-
-    console.log(gameData);
-
-    gameData.forEach((game) => {
-      if (typeof parsedGameData.rounds[game.round] === "undefined") {
-        parsedGameData.rounds[game.round] = [];
-      }
-      parsedGameData.rounds[game.round].push(game);
-    });
-
-    res.json({
-      ...cupData,
-      games: parsedGameData
-    });
-  });
 
   app.post('/game/:id?', async (req, res) => {
     const requestBody = req.body;
 
     if (req.params.id) {
+      await updateGame(database, {...requestBody, id: parseInt(req.params.id)}).catch(err => {
+        return res.json(err);
+      });
 
-
-
+      return res.json({
+        status: 'success',
+        successMsg: 'Successfully updated'
+      })
     } else {
-      const result = await insertNewGame(database, requestBody).catch(err => {
-        return res.json({
-          status: "error",
-          errorMsg: err.code
-        });
+      await insertNewGame(database, requestBody).catch(err => {
+        return res.json(err);
       });
 
       return res.json({

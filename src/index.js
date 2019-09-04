@@ -4,7 +4,16 @@ const cors = require('cors');
 const mysql = require('mysql');
 const parseDbData = require('./parse-db-data');
 const bodyParser = require('body-parser');
+const getDatabase = require('./get-database')({mysql, process});
 
+/**
+ * ======
+ * ROUTES
+ * ======
+ */
+const cupRoute = require('./api/cups')({parseDbData, getDatabase, express});
+
+// ==== SERVE ====
 const serve = require('./serve').bind(null, {
   express,
   config,
@@ -12,7 +21,9 @@ const serve = require('./serve').bind(null, {
   process,
   mysql,
   parseDbData,
-  bodyParser
+  bodyParser,
+  getDatabase,
+  cupRoute
 });
 
 serve();
