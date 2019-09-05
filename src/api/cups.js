@@ -1,6 +1,7 @@
 const makeCupRoute = ({express, getDatabase, parseDbData}) => {
+  // ==== Route for /cups ====
 
-  const router = express.Router();
+  const route = express.Router();
 
   const getCupData = (db, cupId) => {
     return new Promise((resolve) => {
@@ -20,7 +21,7 @@ const makeCupRoute = ({express, getDatabase, parseDbData}) => {
 
   const database = getDatabase();
 
-  router.get('/:id?', (req, res) => {
+  route.get('/:id?', (req, res) => {
 
     const SQL = req.params.id ? `SELECT * FROM cups WHERE id = ?` : `SELECT * FROM cups`;
 
@@ -31,7 +32,7 @@ const makeCupRoute = ({express, getDatabase, parseDbData}) => {
 
   });
 
-  router.get('/current/:teamid', (req, res) => {
+  route.get('/current/:teamid', (req, res) => {
     database.query(`SELECT * FROM cups WHERE team = ? AND active = 1`, [req.params.teamid], (err, rows) => {
       if (rows.length < 1) {
         return res.json({
@@ -43,7 +44,7 @@ const makeCupRoute = ({express, getDatabase, parseDbData}) => {
     });
   });
 
-  router.get('/full/:id', async (req, res) => {
+  route.get('/full/:id', async (req, res) => {
     // Get cup data,
     const cupData = await getCupData(database, req.params.id);
 
@@ -69,7 +70,7 @@ const makeCupRoute = ({express, getDatabase, parseDbData}) => {
     });
   });
 
-  return router;
+  return route;
 };
 
 module.exports = makeCupRoute;

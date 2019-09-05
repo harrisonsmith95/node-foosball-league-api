@@ -11,7 +11,10 @@ const getDatabase = require('./get-database')({mysql, process});
  * ROUTES
  * ======
  */
-const cupRoute = require('./api/cups')({parseDbData, getDatabase, express});
+const cupRoute = require('./api/cups')({express, getDatabase, parseDbData});
+const gameRoute = require('./api/games')({express, getDatabase, parseDbData});
+const teamRoute = require('./api/teams')({express, getDatabase, parseDbData});
+const participantRoute = require('./api/participants')({express, getDatabase, parseDbData});
 
 // ==== SERVE ====
 const serve = require('./serve').bind(null, {
@@ -23,7 +26,10 @@ const serve = require('./serve').bind(null, {
   parseDbData,
   bodyParser,
   getDatabase,
-  cupRoute
+  cupRoute,
+  gameRoute,
+  teamRoute,
+  participantRoute
 });
 
 serve();
