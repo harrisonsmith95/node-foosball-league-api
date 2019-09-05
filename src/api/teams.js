@@ -1,7 +1,9 @@
-const makeTeamRoute = ({express, getDatabase, parseDbData}) => {
+const makeTeamRoute = ({express, getDatabase, parseDbData, authMiddleware}) => {
   // ==== Route for /teams ====
 
   const route = express.Router();
+  route.use(authMiddleware);
+
   const database = getDatabase();
 
   route.get('/:id?', (req, res) => {

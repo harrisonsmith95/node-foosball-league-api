@@ -2,19 +2,25 @@ const express = require('express');
 const config = require('config');
 const cors = require('cors');
 const mysql = require('mysql');
-const parseDbData = require('./parse-db-data');
 const bodyParser = require('body-parser');
+const jwt = require('jsonwebtoken');
+const parseDbData = require('./parse-db-data');
 const getDatabase = require('./get-database')({mysql, process});
 
 /**
- * ======
- * ROUTES
- * ======
+ * Middleware
  */
-const cupRoute = require('./api/cups')({express, getDatabase, parseDbData});
-const gameRoute = require('./api/games')({express, getDatabase, parseDbData});
-const teamRoute = require('./api/teams')({express, getDatabase, parseDbData});
-const participantRoute = require('./api/participants')({express, getDatabase, parseDbData});
+
+const authMiddleware = require('./middleware/auth')({jwt, process});
+
+/**
+ * ROUTES
+ */
+const cupRoute = require('./api/cups')({express, getDatabase, parseDbData, authMiddleware});
+const gameRoute = require('./api/games')({express, getDatabase, parseDbData, authMiddleware});
+const teamRoute = require('./api/teams')({express, getDatabase, parseDbData, authMiddleware});
+const participantRoute = require('./api/participants')({express, getDatabase, parseDbData, authMiddleware});
+const authRoute = require('./api/auth')({express, getDatabase, parseDbData, jwt, process});
 
 // ==== SERVE ====
 const serve = require('./serve').bind(null, {
@@ -29,7 +35,8 @@ const serve = require('./serve').bind(null, {
   cupRoute,
   gameRoute,
   teamRoute,
-  participantRoute
+  participantRoute,
+  authRoute
 });
 
 serve();

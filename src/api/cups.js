@@ -1,7 +1,8 @@
-const makeCupRoute = ({express, getDatabase, parseDbData}) => {
+const makeCupRoute = ({express, getDatabase, parseDbData, authMiddleware}) => {
   // ==== Route for /cups ====
 
   const route = express.Router();
+  route.use(authMiddleware);
 
   const getCupData = (db, cupId) => {
     return new Promise((resolve) => {

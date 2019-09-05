@@ -1,7 +1,9 @@
-const makeGameRoute = ({express, getDatabase, parseDbData}) => {
+const makeGameRoute = ({express, getDatabase, parseDbData, authMiddleware}) => {
   // ==== Route for /games ====
 
   const route = express.Router();
+  route.use(authMiddleware);
+
   const database = getDatabase();
 
   const insertNewGame = (db, data) => {

@@ -1,7 +1,9 @@
-const makeParticipantRoute = ({express, getDatabase, parseDbData}) => {
+const makeParticipantRoute = ({express, getDatabase, parseDbData, authMiddleware}) => {
   // ==== Route for /participants ====
 
   const route = express.Router();
+  route.use(authMiddleware);
+
   const database = getDatabase();
 
   route.get('/:id?', (req, res) => {

@@ -1,8 +1,10 @@
 {
   "env": {
+    "CLEARDB_DATABASE_URL" : "mysql://root:root@localhost/node-foosball-league?reconnect=true",
     "DB_HOST" : "localhost",
     "DB_USER" : "root",
     "DB_PASS" : "root",
-    "DB_NAME" : "node-foosball-league"
+    "DB_NAME" : "node-foosball-league",
+    "jwtKey" : "development_key"
   }
 }
