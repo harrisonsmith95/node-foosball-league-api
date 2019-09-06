@@ -68,8 +68,7 @@ const makeAuthRoute = ({express, getDatabase, parseDbData, jwt, process}) => {
       if (passMatch) {
         const tokenData = {
           id: dbUser.id,
-          username: dbUser.username,
-          email: dbUser.email
+          userPrivileges: 'administrator'
         };
         const token = jwt.sign(tokenData, key, {
           expiresIn: '24h'
