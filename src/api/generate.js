@@ -4,9 +4,35 @@ const makeGenerateRoute = ({express, authMiddleware}) => {
   const route = express.Router();
   route.use(authMiddleware);
 
-  route.get('/', (req, res) => {
+  // Impure
+  const getTeamData = (teamid) => {
 
-    res.send('Will return generated data...');
+  };
+
+  const Impure = {
+    getTeamData
+  };
+
+  const getParticipantsFromTeam = (teamData) => {
+
+  };
+
+  const generateCupFromParticipants = (parsedParticipants) => {
+
+  };
+
+  route.get('/cup/:teamid', (req, res) => {
+
+    if (!req.teamid) {
+      res.status(500).send('No team ID specified...');
+    }
+
+    const teamData = Impure.getTeamData(req.teamid);
+    const parsedParticipants = getParticipantsFromTeam(teamData);
+
+    // Generate cup from participants
+
+    res.json(generateCupFromParticipants(parsedParticipants));
 
   });
 
