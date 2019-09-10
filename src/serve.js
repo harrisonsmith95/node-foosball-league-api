@@ -1,4 +1,4 @@
-const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser, getDatabase, cupRoute, gameRoute, teamRoute, participantRoute, authRoute }) => {
+const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser, getDatabase, cupRoute, gameRoute, teamRoute, participantRoute, generateRoute, authRoute }) => {
   const app = express();
   const port = process.env.PORT || 3000;
 
@@ -40,6 +40,7 @@ const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser,
   app.use('/games', gameRoute);
   app.use('/teams', teamRoute);
   app.use('/participants', participantRoute);
+  app.use('/generate', generateRoute);
   app.use('/auth', authRoute);
 
 };
