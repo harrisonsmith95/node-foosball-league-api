@@ -1,6 +1,6 @@
 const serve = ({ express, config, cors, process, mysql, parseDbData, bodyParser, getDatabase, cupRoute, gameRoute, teamRoute, participantRoute, generateRoute, authRoute }) => {
   const app = express();
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT || 3001;
 
   app.listen(port, () => {
     console.log('listening on port', port);

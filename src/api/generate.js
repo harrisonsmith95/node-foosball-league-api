@@ -18,6 +18,7 @@ const makeGenerateRoute = ({express, getDatabase, parseDbData, authMiddleware, R
     });
   };
 
+
   const getParticipants = (participantIdString) => {
     return new Promise((resolve, reject) => {
       database.query(`SELECT * FROM participants WHERE id in ( ${participantIdString} )`, (err, rows) => {
@@ -80,7 +81,6 @@ const makeGenerateRoute = ({express, getDatabase, parseDbData, authMiddleware, R
       const participants = await Impure.getParticipants(parsedParticipants.join(','));
       const cup = generateCupFromParticipants(participants);
       res.json(cup);
-
     } catch (err) {
       console.log(err);
     }

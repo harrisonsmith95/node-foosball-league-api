@@ -2,7 +2,7 @@ const makeCupRoute = ({express, getDatabase, parseDbData, authMiddleware}) => {
   // ==== Route for /cups ====
 
   const route = express.Router();
-  route.use(authMiddleware);
+  //route.use(authMiddleware);
 
   const getCupData = (db, cupId) => {
     return new Promise((resolve) => {
@@ -15,6 +15,10 @@ const makeCupRoute = ({express, getDatabase, parseDbData, authMiddleware}) => {
   const getGamesInCup = (db, cupId) => {
     return new Promise((resolve) => {
       db.query(`SELECT * FROM games WHERE cup_id = ?`, [cupId], (err, rows) => {
+        if (err) {
+          reject(err);
+          return;
+        }
         resolve(parseDbData(rows));
       });
     });
@@ -28,6 +32,7 @@ const makeCupRoute = ({express, getDatabase, parseDbData, authMiddleware}) => {
 
     // @todo auth and jwt implementation / header check
     database.query(SQL, [req.params.id], (err, rows) => {
+      console.log(rows);
       return res.json(parseDbData(rows));
     });
 

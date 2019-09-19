@@ -1,4 +1,3 @@
-// Authorises a user and returns a long-lasting (~2 days) refresh token, along with a short-lived (~15 mins) access token
 const makeAuthRoute = ({express, getDatabase, parseDbData, jwt, process}) => {
   // Route for /auth
 
